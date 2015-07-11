@@ -21,6 +21,16 @@ var Verp = (function() {
 
     /******************
      * work functions */
+    /* interp2(v1, q1, v2, q2, v3)
+     * Given two vectors and two corresponding values, this function returns an
+     * estimate of a third vector's value. Uses linear interpolation.
+     */
+    function interp2(v1, q1, v2, q2, v3) {
+        var v2subv1 = v2('minus')(v1);
+        var k = v3('minus')(v1)('dot')(v2subv1)/Math.pow(v2subv1('mag'), 2);
+        var q3 = q1 + k*(q2-q1);
+        return q3;
+    }
 
     /***********
      * objects */
@@ -34,7 +44,7 @@ var Verp = (function() {
         }
 
         //this "object's" properties and methods
-        var fieldsAndMethods = {
+        var self = {
             comps: comps,
             mag: Math.sqrt(comps.reduce(function(a, b) {
                 return a + b*b;
@@ -62,6 +72,12 @@ var Verp = (function() {
                 });
                 return Vec(prod);
             },
+            dot: function(a) {
+                var ret = comps.reduce(function(accum, comp, idx) {
+                    return accum + a(idx)*comp;
+                }, 0);
+                return ret;
+            },
             set: function(compIdx, val) {
                 var newComps = comps.slice(0);
                 newComps[compIdx] = val;
@@ -74,8 +90,8 @@ var Verp = (function() {
             if (typeof cmd === 'number') { //syntactic sugar
                 if (cmd >= 0 && cmd < comps.length) return comps[cmd];
                 else return false;
-            } else if (fieldsAndMethods.hasOwnProperty(cmd)) {
-                return fieldsAndMethods[cmd];
+            } else if (self.hasOwnProperty(cmd)) {
+                return self[cmd];
             } else {
                 return false;
             }
@@ -86,6 +102,7 @@ var Verp = (function() {
      * helper functions */
 
     return {
-        Vec: Vec
+        Vec: Vec,
+        interp2: interp2
     };
 })();

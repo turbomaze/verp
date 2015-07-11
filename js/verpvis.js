@@ -45,19 +45,26 @@ var VerpVis = (function() {
         addFloor();
 
         //add some spheres
-        plotSphere(Verp.Vec(-5, -5, -30), 1);
-        plotSphere(Verp.Vec(0, 0, -30), 1);
-        plotSphere(Verp.Vec(5, 5, -30), 1);
+        var v1 = Verp.Vec(-5, -5, -30), q1 = 1;
+        var v2 = Verp.Vec(5, 5, -30), q2 = 3;
+        plotSphere(v1, q1);
+        plotSphere(v2, q2);
+        var v3 = Verp.Vec(-3, -3, -25);
+        var q3 = Verp.interp2(v1, q1, v2, q2, v3);
+        plotSphere(v3, q3);
+        var v4 = Verp.Vec(3, 3, -37);
+        var q4 = Verp.interp2(v1, q1, v2, q2, v4);
+        plotSphere(v4, q4);
 
         //render
         requestAnimationFrame(render);
     }
 
-    function plotSphere(vec, val) {
+    function plotSphere(vec, rad) {
         var mat = new THREE.MeshLambertMaterial({
             color: 0xFF0000
         });
-        var geo = new THREE.SphereGeometry(val, 16, 16);
+        var geo = new THREE.SphereGeometry(rad, 16, 16);
         var sphere = new THREE.Mesh(geo, mat);
         sphere.position.x = vec(0);
         sphere.position.y = vec(1);
