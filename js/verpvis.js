@@ -4,9 +4,16 @@ var VerpVis = (function() {
     /**********
      * config */
     var DIMS = [960, 500];
+    var NUM_DIMS = 2; //dimensionality of the vectors to vis
+    var NUM_VECS = 6;
+    var MAX_VAL = 40;
 
     /*************
      * constants */
+    var sphereGeo = new THREE.SphereGeometry(0.5, 12, 12);
+    var redMat = new THREE.MeshLambertMaterial({
+        color: 0xFF0000
+    });
 
     /*********************
      * working variables */
@@ -46,41 +53,101 @@ var VerpVis = (function() {
         drawAxes();
 
         //add some spheres
-        var v1 = Verp.Vec(0, 10, 0), q1 = 29;
-        var v2 = Verp.Vec(12, 4, 20), q2 = 7;
-        var v3 = Verp.Vec(30, 24, 8), q3 = 14;
-        var v4 = Verp.Vec(28, 19, 36), q4 = 0;
+        if (NUM_DIMS === 1) {
+            var vs = [];
+            var qs = [];
+            for (var ai = 0; ai < NUM_VECS; ai++) {
+                vs.push(Verp.Vec(MAX_VAL*Math.random()));
+                qs.push(MAX_VAL*Math.random());
+            }
 
-        var maxVal = 40;
-        var delta = 4;
-        for (var x = 0; x < maxVal; x+=delta) {
-            for (var y = 0; y < maxVal; y+=delta) {
-                for (var z = 0; z < maxVal; z+=delta) {
-                    var c = Verp.Vec(x, y, z);
-                    var qc = Verp.burp(
-                        [v1,v2,v3,v4], [q1,q2,q3,q4], c
-                    );
-                    var size = 0.1 + 1.4*qc/29;
-                    plotSphere(c, size);
+            var delta = 1;
+            for (var x = 0; x < MAX_VAL; x+=delta) {
+                var c = Verp.Vec(x);
+                var qc = Verp.burp(vs, qs, c);
+                plotSphere(c('and')(qc, 0));
+            }
+
+            for (var ai = 0; ai < NUM_VECS; ai++) {
+                plotSphere(vs[ai]('and')(qs[ai], 0), 0.5, 0xFFFF00);
+            }
+        } else if (NUM_DIMS === 2) {
+            var vs = [];
+            var qs = [];
+            for (var ai = 0; ai < NUM_VECS; ai++) {
+                vs.push(Verp.Vec(
+                    MAX_VAL*Math.random(),
+                    MAX_VAL*Math.random()
+                ));
+                qs.push(MAX_VAL*Math.random());
+            }
+
+            var delta = 1;
+            for (var x = 0; x < MAX_VAL; x+=delta) {
+                for (var z = 0; z < MAX_VAL; z+=delta) {
+                    var c = Verp.Vec(x, z);
+                    var qc = Verp.burp(vs, qs, c);
+                    plotSphere(c('ins')(1, qc));
                 }
             }
-        }
 
-        plotSphere(v1, 0.5, 0xFFFF00);
-        plotSphere(v2, 0.5, 0xFFFF00);
-        plotSphere(v3, 0.5, 0xFFFF00);
-        plotSphere(v4, 0.5, 0xFFFF00);
+            for (var ai = 0; ai < NUM_VECS; ai++) {
+                plotSphere(vs[ai]('ins')(1, qs[ai]), 0.5, 0xFFFF00);
+            }
+        } else { //3 and up
+            var vs = [];
+            var qs = [];
+            for (var ai = 0; ai < NUM_VECS; ai++) {
+                vs.push(Verp.Vec(
+                    MAX_VAL*Math.random(),
+                    MAX_VAL*Math.random(),
+                    MAX_VAL*Math.random()
+                ));
+                qs.push(MAX_VAL*Math.random());
+            }
+
+            var minQ = qs.reduce(function(ret, q) {
+                return Math.min(ret, q);
+            }, qs[0]);
+            var maxQ = qs.reduce(function(ret, q) {
+                return Math.max(ret, q);
+            }, qs[0]);
+
+            var delta = 4.5;
+            for (var x = 0; x < MAX_VAL; x+=delta) {
+                for (var y = 0; y < MAX_VAL; y+=delta) {
+                    for (var z = 0; z < MAX_VAL; z+=delta) {
+                        var c = Verp.Vec(x, y, z);
+                        var qc = Verp.burp(vs, qs, c);
+                        var size = 0.1 + 1.4*(qc-minQ)/maxQ;
+                        plotSphere(c, size);
+                    }
+                }
+            }
+
+            for (var ai = 0; ai < NUM_VECS; ai++) {
+                plotSphere(vs[ai], 0.5, 0xFFFF00);
+            }
+        }
 
         //render
         requestAnimationFrame(render);
     }
 
     function plotSphere(vec, rad, color) {
-        var mat = new THREE.MeshLambertMaterial({
-            color: color || 0xFF0000
-        });
-        var geo = new THREE.SphereGeometry(rad, 16, 16);
-        var sphere = new THREE.Mesh(geo, mat);
+        var sphere = null;
+        if (arguments.length === 3) {
+            var geo = new THREE.SphereGeometry(rad, 16, 16);
+            var mat = new THREE.MeshLambertMaterial({
+                color: color || 0xFF0000
+            });
+            sphere = new THREE.Mesh(geo, mat);
+        } else if (arguments.length === 2) {
+            var geo = new THREE.SphereGeometry(rad, 16, 16);
+            sphere = new THREE.Mesh(geo, redMat);
+        } else {
+            sphere = new THREE.Mesh(sphereGeo, redMat);
+        }
         sphere.position.x = vec(0);
         sphere.position.y = vec(1);
         sphere.position.z = vec(2);

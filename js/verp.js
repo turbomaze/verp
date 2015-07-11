@@ -13,7 +13,9 @@ var Verp = (function() {
     /**********
      * config */
     var WEIGHT_FUNC = function(d1, d2) {
-        return 1/Math.max(d1, 0.1) + 1/Math.max(d2, 0.1);
+        var wt1 = 1/Math.max(d1+d2, 0.1);
+        var wt2 = 1/Math.max(d1, 0.1) + 1/Math.max(d2, 0.1);
+        return 0.75*wt1 + 0.25*wt2;
     };
 
     /*************
